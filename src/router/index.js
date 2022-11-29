@@ -1,27 +1,24 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import routes from './dynamicRouter'
 
 Vue.use(VueRouter)
 
-const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: HomeView
-  },
-  {
-    path: '/about',
-    name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
-  }
-]
+// 解决 Vue 路由传递参数时，出现 Uncaught (in promise) NavigationDuplicated: Avoided redundant navigation 问题
+const originalPush = VueRouter.prototype.push
+VueRouter.prototype.push = function push(location) {
+  return originalPush.call(this, location).catch((err) => err)
+}
 
 const router = new VueRouter({
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  if (to.path === '/login') return next()
+  const token = window.sessionStorage.getItem('token')
+  if (!token) return next('/login')
+  next()
 })
 
 export default router
